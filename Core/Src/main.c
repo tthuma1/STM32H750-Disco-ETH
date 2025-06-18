@@ -20,6 +20,9 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "lwip.h"
+#include "lwip/udp.h"
+#include "lwip/tcp.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -679,18 +682,68 @@ void StartDefaultTask(void *argument)
      * The default include path should already contain
      * 'lwip/apps/lwiperf.h'
      */
-    LOCK_TCPIP_CORE();
-    lwiperf_start_tcp_server_default(NULL, NULL);
+  LOCK_TCPIP_CORE();
+  lwiperf_start_tcp_server_default(NULL, NULL);
 
-    ip4_addr_t remote_addr;
-    IP4_ADDR(&remote_addr, 192, 168, 1, 1);
-    lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
-    UNLOCK_TCPIP_CORE();
-    /* Infinite loop */
-    for(;;)
-    {
-      osDelay(1000);
+  ip4_addr_t remote_addr;
+  IP4_ADDR(&remote_addr, 192, 168, 1, 1);
+  lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
+  // UNLOCK_TCPIP_CORE();
+  // /* Infinite loop */
+  // for(;;)
+  // {
+  //     osDelay(1000);
+  // }
+
+  /* UDP example */
+  const char* message = "Hello UDP message!\r\n";
+
+  osDelay(1000);
+
+  ip_addr_t PC_IPADDR;
+  IP_ADDR4(&PC_IPADDR, 192, 168, 1, 1);
+
+  struct udp_pcb* my_udp = udp_new();
+  udp_connect(my_udp, &PC_IPADDR, 55151);
+  struct pbuf* udp_buffer = NULL;
+
+  /* TCP client config */
+  ip_addr_t server_ip;
+  IP4_ADDR(&server_ip, 192,168,1,1); // Windows PC IP
+
+  struct tcp_pcb* tcp_client = tcp_new();
+  const char* tcp_msg = "Hello from STM32 TCP client!\r\n";
+  tcp_connect(tcp_client, &server_ip, 12345, NULL);
+
+  UNLOCK_TCPIP_CORE();
+
+  // /* Infinite loop */
+  for (;;) {
+    osDelay(1000);
+    /* !! PBUF_RAM is critical for correct operation !! */
+    udp_buffer = pbuf_alloc(PBUF_TRANSPORT, strlen(message), PBUF_RAM);
+
+    if (udp_buffer != NULL) {
+      LOCK_TCPIP_CORE();
+      /* Send UDP message */
+      memcpy(udp_buffer->payload, message, strlen(message));
+      udp_send(my_udp, udp_buffer);
+      pbuf_free(udp_buffer);
+      UNLOCK_TCPIP_CORE();
     }
+
+    osDelay(300);
+
+    tcp_buffer = pbuf_alloc(PBUF_TRANSPORT, strlen(tcp_msg), PBUF_RAM);
+    if (tcp_buffer != NULL) {
+        LOCK_TCPIP_CORE();
+        /* send TCP message */
+        memcpy(tcp_buffer->payload, tcp_msg, strlen(tcp_msg));
+        tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
+        tcp_output(tcp_client);
+        UNLOCK_TCPIP_CORE();
+    }
+  }
   /* USER CODE END 5 */
 }
 
