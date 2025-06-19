@@ -689,7 +689,8 @@ void StartDefaultTask(void *argument)
      * The default include path should already contain
      * 'lwip/apps/lwiperf.h'
      */
-  LOCK_TCPIP_CORE();
+  osDelay(2000);
+  // LOCK_TCPIP_CORE();
   // lwiperf_start_tcp_server_default(NULL, NULL);
 
   // ip4_addr_t remote_addr;
@@ -705,28 +706,32 @@ void StartDefaultTask(void *argument)
   /* UDP example */
   const char* message = "Hello UDP message!\r\n";
 
-  osDelay(1000);
+  // osDelay(1000);
 
   ip_addr_t PC_IPADDR;
   IP_ADDR4(&PC_IPADDR, 192, 168, 1, 1);
 
+  LOCK_TCPIP_CORE();
   struct udp_pcb* my_udp = udp_new();
   udp_connect(my_udp, &PC_IPADDR, 55151);
+  UNLOCK_TCPIP_CORE();
   struct pbuf* udp_buffer = NULL;
 
   /* TCP client config */
   ip_addr_t server_ip;
   IP4_ADDR(&server_ip, 192, 168, 1, 1); // Windows PC IP
 
+  LOCK_TCPIP_CORE();
   struct tcp_pcb* tcp_client = tcp_new();
   if (tcp_client != NULL) {
     tcp_connect(tcp_client, &server_ip, 12345, tcp_connected_cb);  // Use the callback
   }
+  UNLOCK_TCPIP_CORE();
 
   const char* tcp_msg = "Hello from STM32 TCP client!\r\n";
   struct pbuf* tcp_buffer = NULL;
 
-  UNLOCK_TCPIP_CORE();
+  osDelay(1000);
 
   // /* Infinite loop */
   for (;;) {
