@@ -24,6 +24,8 @@
 #include "lwip/tcp.h"
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -728,13 +730,6 @@ void StartDefaultTask(void *argument)
   }
   UNLOCK_TCPIP_CORE();
 
-  const char* tcp_msg = 
-    "POST /temperature HTTP/1.1\r\n"
-    "Host: 192.168.1.1:12345\r\n"
-    "Content-Type: application/json\r\n"
-    "Content-Length: 13\r\n"
-    "\r\n"
-    "{\"temp\":22}";
   struct pbuf* tcp_buffer = NULL;
 
   osDelay(1000);
@@ -757,7 +752,19 @@ void StartDefaultTask(void *argument)
     osDelay(300);
 
     if (tcp_connected) {
-      LOCK_TCPIP_CORE();
+      char tcp_msg[256]; // Make sure this buffer is large enough
+
+      int temp = (rand() % 11) + 20; // Random number between 20 and 30
+
+      sprintf(tcp_msg,
+        "POST /temperature HTTP/1.1\r\n"
+        "Host: 192.168.1.1:12345\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 12\r\n"
+        "\r\n"
+        "{\"temp\":%d}", temp);
+
+    	LOCK_TCPIP_CORE();
       tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
       tcp_output(tcp_client);
       UNLOCK_TCPIP_CORE();
