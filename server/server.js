@@ -1,10 +1,27 @@
-// Complete file: server.js
 const net = require("net");
 const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
 
 let latestTemp = null;
 
-// Raw TCP server for STM32
+// 🌐 Express + HTTP + Socket.IO setup
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+app.use(express.static("public")); // serve HTML file
+
+io.on("connection", (socket) => {
+  console.log("Browser connected");
+
+  // Send current temp on connect
+  if (latestTemp !== null) {
+    socket.emit("tempUpdate", latestTemp);
+  }
+});
+
+// 🌡️ Raw TCP server for STM32
 const tcpServer = net.createServer((socket) => {
   socket.on("data", (data) => {
     const req = data.toString();
@@ -16,6 +33,9 @@ const tcpServer = net.createServer((socket) => {
       const json = JSON.parse(jsonString);
       latestTemp = json.temp;
       console.log("Parsed Temp:", latestTemp);
+
+      // Emit live update to browser
+      io.emit("tempUpdate", latestTemp);
     } catch (err) {
       console.error("JSON parse error:", err.message);
     }
@@ -25,25 +45,9 @@ const tcpServer = net.createServer((socket) => {
 });
 
 tcpServer.listen(12345, () => {
-  console.log("TCP Server (STM32) running on port 12345");
+  console.log("TCP server listening on port 12345 (STM32)");
 });
 
-// Express server for browser
-const app = express();
-app.get("/", (req, res) => {
-  res.send(`
-    <html>
-      <head><title>STM32 Temp</title></head>
-      <body style="font-family:sans-serif;text-align:center;margin-top:100px;">
-        <h1>STM32 Temperature</h1>
-        <div style="font-size:3em;color:#2a9d8f;">
-          ${latestTemp !== null ? latestTemp + " °C" : "--"}
-        </div>
-      </body>
-    </html>
-  `);
-});
-
-app.listen(3000, () => {
-  console.log("Web interface running at http://localhost:3000");
+server.listen(3000, () => {
+  console.log("Web server + socket.io running at http://localhost:3000");
 });
