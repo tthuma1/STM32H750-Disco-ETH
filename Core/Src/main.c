@@ -23,6 +23,7 @@
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 #include <string.h>
+#include <stdbool.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -659,7 +660,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+bool tcp_connected = false;
+err_t tcp_connected_cb(void *arg, struct tcp_pcb *tpcb, err_t err) {
+    if (err == ERR_OK) {
+        tcp_connected = true;
+    }
+    return ERR_OK;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -683,11 +690,11 @@ void StartDefaultTask(void *argument)
      * 'lwip/apps/lwiperf.h'
      */
   LOCK_TCPIP_CORE();
-  lwiperf_start_tcp_server_default(NULL, NULL);
+  // lwiperf_start_tcp_server_default(NULL, NULL);
 
-  ip4_addr_t remote_addr;
-  IP4_ADDR(&remote_addr, 192, 168, 1, 1);
-  lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
+  // ip4_addr_t remote_addr;
+  // IP4_ADDR(&remote_addr, 192, 168, 1, 1);
+  // lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
   // UNLOCK_TCPIP_CORE();
   // /* Infinite loop */
   // for(;;)
@@ -709,11 +716,15 @@ void StartDefaultTask(void *argument)
 
   /* TCP client config */
   ip_addr_t server_ip;
-  IP4_ADDR(&server_ip, 192,168,1,1); // Windows PC IP
+  IP4_ADDR(&server_ip, 192, 168, 1, 1); // Windows PC IP
 
   struct tcp_pcb* tcp_client = tcp_new();
+  if (tcp_client != NULL) {
+    tcp_connect(tcp_client, &server_ip, 12345, tcp_connected_cb);  // Use the callback
+  }
+
   const char* tcp_msg = "Hello from STM32 TCP client!\r\n";
-  tcp_connect(tcp_client, &server_ip, 12345, NULL);
+  struct pbuf* tcp_buffer = NULL;
 
   UNLOCK_TCPIP_CORE();
 
@@ -734,15 +745,22 @@ void StartDefaultTask(void *argument)
 
     osDelay(300);
 
-    tcp_buffer = pbuf_alloc(PBUF_TRANSPORT, strlen(tcp_msg), PBUF_RAM);
-    if (tcp_buffer != NULL) {
-        LOCK_TCPIP_CORE();
-        /* send TCP message */
-        memcpy(tcp_buffer->payload, tcp_msg, strlen(tcp_msg));
-        tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
-        tcp_output(tcp_client);
-        UNLOCK_TCPIP_CORE();
+    if (tcp_connected) {
+      LOCK_TCPIP_CORE();
+      tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
+      tcp_output(tcp_client);
+      UNLOCK_TCPIP_CORE();
     }
+
+    // tcp_buffer = pbuf_alloc(PBUF_TRANSPORT, strlen(tcp_msg), PBUF_RAM);
+    // if (tcp_buffer != NULL) {
+    //     LOCK_TCPIP_CORE();
+    //     /* send TCP message */
+    //     memcpy(tcp_buffer->payload, tcp_msg, strlen(tcp_msg));
+    //     tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
+    //     tcp_output(tcp_client);
+    //     UNLOCK_TCPIP_CORE();
+    // }
   }
   /* USER CODE END 5 */
 }
