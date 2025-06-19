@@ -728,7 +728,13 @@ void StartDefaultTask(void *argument)
   }
   UNLOCK_TCPIP_CORE();
 
-  const char* tcp_msg = "Hello from STM32 TCP client!\r\n";
+  const char* tcp_msg = 
+    "POST /temperature HTTP/1.1\r\n"
+    "Host: 192.168.1.1:12345\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: 13\r\n"
+    "\r\n"
+    "{\"temp\":22}";
   struct pbuf* tcp_buffer = NULL;
 
   osDelay(1000);

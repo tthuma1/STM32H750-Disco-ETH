@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>STM32 Temperature Monitor</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 100px; }
+    h1 { font-size: 2em; }
+    #temp { font-size: 3em; color: #2a9d8f; }
+  </style>
+</head>
+<body>
+  <h1>Current Temperature</h1>
+  <div id="temp">--</div>
+
+  <script>
+    const socket = io();
+    socket.on("updateTemp", temp => {
+      document.getElementById("temp").innerText = `${temp} °C`;
+    });
+  </script>
+</body>
+</html>
