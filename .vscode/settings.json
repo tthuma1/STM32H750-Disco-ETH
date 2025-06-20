@@ -3,6 +3,14 @@
   "stm32-for-vscode.makePath": false,
   "stm32-for-vscode.armToolchainPath": false,
   "files.associations": {
-    "mqtt.h": "c"
+    "mqtt.h": "c",
+    "altcp.h": "c",
+    "altcp_priv.h": "c",
+    "altcp_tls_mbedtls_structs.h": "c",
+    "altcp_tls.h": "c",
+    "x509.h": "c",
+    "altcp_tls_mbedtls_mem.h": "c",
+    "ssl.h": "c",
+    "error.h": "c"
   }
 }

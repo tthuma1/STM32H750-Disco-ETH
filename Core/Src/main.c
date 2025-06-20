@@ -108,10 +108,10 @@ void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status
   if (status == MQTT_CONNECT_ACCEPTED) {
     printf("MQTT connected!\n");
     
-  mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
+    mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
 
     /* Subscribe to topic */
-   mqtt_subscribe(client, "stm32/temp", 0, mqtt_sub_request_cb, NULL);
+    mqtt_subscribe(client, "stm32/temp", 0, mqtt_sub_request_cb, NULL);
     
     /* Publish dummy temp */
     const char* temp_msg = "25.6";
@@ -129,8 +129,8 @@ void start_mqtt(void) {
   
   struct mqtt_connect_client_info_t ci = {
     .client_id = "stm32h7",
-    .client_user = NULL,
-    .client_pass = NULL,
+    .client_user = "user1",
+    .client_pass = "pass1",
     .keep_alive = 60,
     .will_topic = NULL,
     .will_msg = NULL,
