@@ -3289,6 +3289,10 @@
 #include MBEDTLS_USER_CONFIG_FILE
 #endif
 
+#undef MBEDTLS_FS_IO
+#undef MBEDTLS_DEBUG_C
+#undef MBEDTLS_TIMING_C
+
 #include "check_config.h"
 
 #endif /* MBEDTLS_CONFIG_H */
