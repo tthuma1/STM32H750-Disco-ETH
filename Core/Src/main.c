@@ -26,6 +26,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "mqtt.h"
+#include "lwip/apps/mqtt.h"
+#include "lwip/apps/mqtt_priv.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -75,6 +78,61 @@ void StartDefaultTask(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+static mqtt_client_t mqtt_client;
+ip_addr_t broker_ip;
+
+void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
+  if (status == MQTT_CONNECT_ACCEPTED) {
+    printf("MQTT connected!\n");
+    
+    /* Subscribe to topic */
+//    mqtt_subscribe(client, "stm32/temp", 0, NULL, NULL);
+    
+    /* Publish dummy temp */
+    const char* temp_msg = "25.6";
+    err_t err = mqtt_publish(client, "stm32/temp", temp_msg, strlen(temp_msg), 0, 0, NULL, NULL);
+    if (err != ERR_OK) {
+      printf("Publish error: %d\n", err);
+    }
+  } else {
+    printf("Connection failed: %d\n", status);
+  }
+}
+
+void mqtt_subscribe_cb(void *arg, const char *topic, u32_t tot_len) {
+  printf("Subscribed to: %s\n", topic);
+}
+
+void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len) {
+  printf("Incoming: %s\n", topic);
+}
+
+void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
+  printf("Message: %.*s\n", len, data);
+}
+
+void start_mqtt(void) {
+  mqtt_client_t *client = &mqtt_client;
+  
+  LOCK_TCPIP_CORE();
+  mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
+  UNLOCK_TCPIP_CORE();
+  
+  struct mqtt_connect_client_info_t ci = {
+    .client_id = "stm32h7",
+    .client_user = NULL,
+    .client_pass = NULL,
+    .keep_alive = 60,
+    .will_topic = NULL,
+    .will_msg = NULL,
+    .will_qos = 0,
+    .will_retain = 0
+  };
+  
+  LOCK_TCPIP_CORE();
+  mqtt_client_connect(client, &broker_ip, 1883, mqtt_connection_cb, NULL, &ci);
+  UNLOCK_TCPIP_CORE();
+}
 /* USER CODE END 0 */
 
 /**
@@ -692,6 +750,9 @@ void StartDefaultTask(void *argument)
      * 'lwip/apps/lwiperf.h'
      */
   osDelay(2000);
+  /* Replace with your PC's IP address */
+  IP4_ADDR(&broker_ip, 192, 168, 1, 1); 
+  start_mqtt();
   // LOCK_TCPIP_CORE();
   // lwiperf_start_tcp_server_default(NULL, NULL);
 
