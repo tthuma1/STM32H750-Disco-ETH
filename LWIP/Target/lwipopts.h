@@ -134,6 +134,14 @@ void sys_unlock_tcpip_core(void);
 
 void sys_check_core_locking(void);
 void sys_mark_tcpip_thread(void);
+
+// #define LWIP_ALTCP        1
+// #define LWIP_ALTCP_TLS_MBEDTLS 1
+// #define LWIP_ALTCP_TLS    1
+// #define LWIP_MBEDTLS      1
+// #define LWIP_TCP          1
+// #define MQTT_VAR_HEADER_BUFFER_LEN 128
+// #define MQTT_OUTPUT_RINGBUF_SIZE   256
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

@@ -11,6 +11,11 @@
     "x509.h": "c",
     "altcp_tls_mbedtls_mem.h": "c",
     "ssl.h": "c",
-    "error.h": "c"
+    "error.h": "c",
+    "config.h": "c",
+    "net.h": "c",
+    "ctr_drbg.h": "c",
+    "ssl_internal.h": "c",
+    "cipher.h": "c"
   }
 }
