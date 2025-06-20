@@ -81,21 +81,14 @@ void StartDefaultTask(void *argument);
 static mqtt_client_t mqtt_client;
 ip_addr_t broker_ip;
 
-void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
-  if (status == MQTT_CONNECT_ACCEPTED) {
-    printf("MQTT connected!\n");
-    
-    /* Subscribe to topic */
-//    mqtt_subscribe(client, "stm32/temp", 0, NULL, NULL);
-    
-    /* Publish dummy temp */
-    const char* temp_msg = "25.6";
-    err_t err = mqtt_publish(client, "stm32/temp", temp_msg, strlen(temp_msg), 0, 0, NULL, NULL);
-    if (err != ERR_OK) {
-      printf("Publish error: %d\n", err);
-    }
-  } else {
-    printf("Connection failed: %d\n", status);
+void mqtt_sub_request_cb(void *arg, err_t result) {
+  printf("Subscribe result: %d\n\r", result);
+}
+
+void mqtt_pub_request_cb(void *arg, err_t result)
+{
+  if(result != ERR_OK) {
+    printf("Publish result: %d\n", result);
   }
 }
 
@@ -111,12 +104,28 @@ void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
   printf("Message: %.*s\n", len, data);
 }
 
+void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
+  if (status == MQTT_CONNECT_ACCEPTED) {
+    printf("MQTT connected!\n");
+    
+  mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
+
+    /* Subscribe to topic */
+   mqtt_subscribe(client, "stm32/temp", 0, mqtt_sub_request_cb, NULL);
+    
+    /* Publish dummy temp */
+    const char* temp_msg = "25.6";
+    err_t err = mqtt_publish(client, "stm32/temp", temp_msg, strlen(temp_msg), 0, 0, mqtt_pub_request_cb, NULL);
+    if (err != ERR_OK) {
+      printf("Publish error: %d\n", err);
+    }
+  } else {
+    printf("Connection failed: %d\n", status);
+  }
+}
+
 void start_mqtt(void) {
   mqtt_client_t *client = &mqtt_client;
-  
-  LOCK_TCPIP_CORE();
-  mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
-  UNLOCK_TCPIP_CORE();
   
   struct mqtt_connect_client_info_t ci = {
     .client_id = "stm32h7",
