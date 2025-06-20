@@ -3291,16 +3291,4 @@
 
 #include "check_config.h"
 
-#undef MBEDTLS_SHA256_C
-#undef MBEDTLS_DHM_C
-#undef MBEDTLS_ECDH_C
-#undef MBEDTLS_ECDSA_C
-#undef MBEDTLS_SSL_TLS_C
-#undef MBEDTLS_SSL_CLI_C
-#undef MBEDTLS_AES_C
-#undef MBEDTLS_SHA256_C
-#undef MBEDTLS_ENTROPY_C
-#undef MBEDTLS_CTR_DRBG_C
-#undef MBEDTLS_PK_C
-
 #endif /* MBEDTLS_CONFIG_H */
