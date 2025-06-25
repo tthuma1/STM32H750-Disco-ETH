@@ -48,6 +48,6 @@ tcpServer.listen(12345, () => {
   console.log("TCP server listening on port 12345 (STM32)");
 });
 
-server.listen(3000, () => {
-  console.log("Web server + socket.io running at http://localhost:3000");
+server.listen(3001, () => {
+  console.log("Web server + socket.io running at http://localhost:3001");
 });
