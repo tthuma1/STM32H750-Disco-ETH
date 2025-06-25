@@ -4,6 +4,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 
 let latestTemp = null;
+let buttonPressed = null;
 
 // 🌐 Express + HTTP + Socket.IO setup
 const app = express();
@@ -19,6 +20,10 @@ io.on("connection", (socket) => {
   if (latestTemp !== null) {
     socket.emit("tempUpdate", latestTemp);
   }
+
+  if (buttonPressed !== null) {
+    socket.emit("buttonPressed", buttonPressed);
+  }
 });
 
 // 🌡️ Raw TCP server for STM32
@@ -32,10 +37,12 @@ const tcpServer = net.createServer((socket) => {
     try {
       const json = JSON.parse(jsonString);
       latestTemp = json.temp;
-      console.log("Parsed Temp:", latestTemp);
+      buttonPressed = json.button_pressed;
+      console.log("Parsed Temp:", latestTemp, "\tButton Pressed:", buttonPressed);
 
       // Emit live update to browser
       io.emit("tempUpdate", latestTemp);
+      io.emit("buttonPressed", buttonPressed);
     } catch (err) {
       console.error("JSON parse error:", err.message);
     }

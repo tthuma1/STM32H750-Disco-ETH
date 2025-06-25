@@ -6,12 +6,14 @@
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 100px; }
-    #temp { font-size: 3em; color: #2a9d8f; }
+    #temp, #buttonState { font-size: 3em; color: #2a9d8f; }
   </style>
 </head>
 <body>
   <h1>Live Temperature from STM32</h1>
   <div id="temp">--</div>
+  <h1>Is button pressed?</h1>
+  <div id="buttonState">--</div>
 
   <script>
     const socket = io();
@@ -19,6 +21,10 @@
     socket.on("tempUpdate", (temp) => {
       document.getElementById("temp").innerText = `${temp} °C`;
     });
+
+    socket.on("buttonPressed", isPressed => {
+      document.getElementById("buttonState").innerText = isPressed ? "Pressed" : "Released";
+    })
   </script>
 </body>
 </html>

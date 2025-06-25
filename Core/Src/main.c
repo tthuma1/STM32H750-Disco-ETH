@@ -75,7 +75,6 @@ const osMessageQueueAttr_t buttonEventQueue_attributes = {
   .name = "buttonEventQueue"
 };
 /* USER CODE BEGIN PV */
-uint8_t button_msg;
 struct tcp_pcb* tcp_client;
 /* USER CODE END PV */
 
@@ -164,7 +163,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   if (GPIO_Pin == GPIO_PIN_13)
   {
     // Button state changed, send TCP packet
-    button_msg = 1;
+    GPIO_PinState state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+    uint8_t button_msg = 0;
+    if (state == GPIO_PIN_RESET) {
+      // button released
+      button_msg = 0;
+    } else {
+      // button pressed
+      button_msg = 1;
+    }
+
     osMessageQueuePut(buttonEventQueueHandle, &button_msg, 0, 0);
   }
 }
@@ -903,6 +911,7 @@ void StartButtonTask(void *argument)
   /* USER CODE BEGIN StartButtonTask */
   /* Infinite loop */
   osDelay(1000);
+  uint8_t button_msg;
 
   for(;;)
   {
@@ -920,7 +929,7 @@ void StartButtonTask(void *argument)
           "Content-Type: application/json\r\n"
           "Content-Length: 12\r\n"
           "\r\n"
-          "{\"temp\":%d}", temp);
+          "{\"button_pressed\":%d}", button_msg);
 
         LOCK_TCPIP_CORE();
         tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
