@@ -95,8 +95,6 @@ void Error_Handler(void);
 #define VBUS_FS2_GPIO_Port GPIOA
 #define FDCAN1_TX_Pin GPIO_PIN_13
 #define FDCAN1_TX_GPIO_Port GPIOH
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
 #define SDIO1_D0_Pin GPIO_PIN_8
 #define SDIO1_D0_GPIO_Port GPIOC
 #define SDIO1_D1_Pin GPIO_PIN_9
@@ -137,6 +135,7 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOB
 #define OTG_FS2_OverCurrent_Pin GPIO_PIN_11
 #define OTG_FS2_OverCurrent_GPIO_Port GPIOH
+#define OTG_FS2_OverCurrent_EXTI_IRQn EXTI15_10_IRQn
 #define MII_RXD0_Pin GPIO_PIN_4
 #define MII_RXD0_GPIO_Port GPIOC
 #define MII_RX_D3_Pin GPIO_PIN_1
