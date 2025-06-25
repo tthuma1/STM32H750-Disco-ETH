@@ -17,11 +17,11 @@ io.on("connection", (socket) => {
   console.log("Browser connected");
 
   // Send current temp on connect
-  if (latestTemp !== null) {
+  if (latestTemp) {
     socket.emit("tempUpdate", latestTemp);
   }
 
-  if (buttonPressed !== null) {
+  if (buttonPressed !== null && buttonPressed !== undefined) {
     socket.emit("buttonPressed", buttonPressed);
   }
 });
@@ -41,8 +41,13 @@ const tcpServer = net.createServer((socket) => {
       console.log("Parsed Temp:", latestTemp, "\tButton Pressed:", buttonPressed);
 
       // Emit live update to browser
-      io.emit("tempUpdate", latestTemp);
-      io.emit("buttonPressed", buttonPressed);
+      if (latestTemp !== undefined) {
+        io.emit("tempUpdate", latestTemp);
+      }
+
+      if (buttonPressed !== undefined) {
+        io.emit("buttonPressed", buttonPressed);
+      }
     } catch (err) {
       console.error("JSON parse error:", err.message);
     }
