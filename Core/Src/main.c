@@ -62,8 +62,21 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for ButtonTask */
+osThreadId_t ButtonTaskHandle;
+const osThreadAttr_t ButtonTask_attributes = {
+  .name = "ButtonTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for buttonEventQueue */
+osMessageQueueId_t buttonEventQueueHandle;
+const osMessageQueueAttr_t buttonEventQueue_attributes = {
+  .name = "buttonEventQueue"
+};
 /* USER CODE BEGIN PV */
-
+uint8_t button_msg;
+struct tcp_pcb* tcp_client;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,6 +85,7 @@ static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC3_Init(void);
 void StartDefaultTask(void *argument);
+void StartButtonTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -150,7 +164,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   if (GPIO_Pin == GPIO_PIN_13)
   {
     // Button state changed, send TCP packet
-    int a = 1;
+    button_msg = 1;
+    osMessageQueuePut(buttonEventQueueHandle, &button_msg, 0, 0);
   }
 }
 
@@ -216,6 +231,10 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of buttonEventQueue */
+  buttonEventQueueHandle = osMessageQueueNew (8, sizeof(uint8_t), &buttonEventQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -223,6 +242,9 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of ButtonTask */
+  ButtonTaskHandle = osThreadNew(StartButtonTask, NULL, &ButtonTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -810,7 +832,7 @@ void StartDefaultTask(void *argument)
   IP4_ADDR(&server_ip, 192, 168, 1, 1); // Windows PC IP
 
   LOCK_TCPIP_CORE();
-  struct tcp_pcb* tcp_client = tcp_new();
+  tcp_client = tcp_new();
   if (tcp_client != NULL) {
     tcp_connect(tcp_client, &server_ip, 12345, tcp_connected_cb);  // Use the callback
   }
@@ -867,6 +889,47 @@ void StartDefaultTask(void *argument)
     // }
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartButtonTask */
+/**
+* @brief Function implementing the ButtonTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartButtonTask */
+void StartButtonTask(void *argument)
+{
+  /* USER CODE BEGIN StartButtonTask */
+  /* Infinite loop */
+  osDelay(1000);
+
+  for(;;)
+  {
+    if (osMessageQueueGet(buttonEventQueueHandle, &button_msg, NULL, osWaitForever) == osOK)
+    {
+      if (tcp_connected) {
+        char tcp_msg[256]; // Make sure this buffer is large enough
+
+        // int temp = (rand() % 11) + 20; // Random number between 20 and 30
+        int temp = 42;
+
+        sprintf(tcp_msg,
+          "POST /temperature HTTP/1.1\r\n"
+          "Host: 192.168.1.1:12345\r\n"
+          "Content-Type: application/json\r\n"
+          "Content-Length: 12\r\n"
+          "\r\n"
+          "{\"temp\":%d}", temp);
+
+        LOCK_TCPIP_CORE();
+        tcp_write(tcp_client, tcp_msg, strlen(tcp_msg), TCP_WRITE_FLAG_COPY);
+        tcp_output(tcp_client);
+        UNLOCK_TCPIP_CORE();
+      }
+    }
+  }
+  /* USER CODE END StartButtonTask */
 }
 
  /* MPU Configuration */

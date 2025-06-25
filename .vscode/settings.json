@@ -16,6 +16,7 @@
     "net.h": "c",
     "ctr_drbg.h": "c",
     "ssl_internal.h": "c",
-    "cipher.h": "c"
+    "cipher.h": "c",
+    "memp_priv.h": "c"
   }
 }
