@@ -95,6 +95,7 @@ void StartButtonTask(void *argument);
 
 static mqtt_client_t mqtt_client;
 ip_addr_t broker_ip;
+bool mqtt_connected = false;
 
 void mqtt_sub_request_cb(void *arg, err_t result) {
   printf("Subscribe result: %d\n\r", result);
@@ -122,6 +123,7 @@ void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
 void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
   if (status == MQTT_CONNECT_ACCEPTED) {
     printf("MQTT connected!\n");
+    mqtt_connected = true;
     
     mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
 
@@ -129,7 +131,10 @@ void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status
     mqtt_subscribe(client, "stm32/temp", 0, mqtt_sub_request_cb, NULL);
     
     /* Publish dummy temp */
-    const char* temp_msg = "25.6";
+    int temp = (rand() % 11) + 20; // Random number between 20 and 30
+    const char temp_msg[3];
+    sprintf(temp_msg, "%d", temp);
+
     err_t err = mqtt_publish(client, "stm32/temp", temp_msg, strlen(temp_msg), 0, 0, mqtt_pub_request_cb, NULL);
     if (err != ERR_OK) {
       printf("Publish error: %d\n", err);
@@ -822,7 +827,7 @@ void StartDefaultTask(void *argument)
   // }
 
   /* UDP example */
-  const char* message = "Hello UDP message!\r\n";
+  const char* message = "UDP from STM32!\r\n";
 
   // osDelay(1000);
 
@@ -895,6 +900,20 @@ void StartDefaultTask(void *argument)
     //     tcp_output(tcp_client);
     //     UNLOCK_TCPIP_CORE();
     // }
+
+
+    /* MQTT send */
+    if (mqtt_connected) {
+      int temp = (rand() % 11) + 20; // Random number between 20 and 30
+      const char temp_msg[3];
+      sprintf(temp_msg, "%d", temp);
+
+    	LOCK_TCPIP_CORE();
+      err_t err = mqtt_publish(&mqtt_client, "stm32/temp", temp_msg, strlen(temp_msg), 0, 0, mqtt_pub_request_cb, NULL);
+    	UNLOCK_TCPIP_CORE();
+
+      osDelay(200);
+    }
   }
   /* USER CODE END 5 */
 }
@@ -919,9 +938,6 @@ void StartButtonTask(void *argument)
     {
       if (tcp_connected) {
         char tcp_msg[256]; // Make sure this buffer is large enough
-
-        // int temp = (rand() % 11) + 20; // Random number between 20 and 30
-        int temp = 42;
 
         sprintf(tcp_msg,
           "POST /temperature HTTP/1.1\r\n"
